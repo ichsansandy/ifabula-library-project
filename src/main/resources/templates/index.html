@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+            rel="stylesheet"
+            href="https://unpkg.com/@material-tailwind/html@latest/styles/material-tailwind.css"
+    />
+    <link rel="stylesheet" href="/css/style.css"/>
+
+</head>
+<body class="">
+<!-- create navigation bar ( header) -->
+<nav class="flex gap-3 items-center text-lg px-5 py-2 bg-black">
+    <div class="px-5 py-2 bg-gray-200 text-black hover:bg-gray-100 transition-all rounded-lg">
+        Library
+    </div>
+    <div sec:authorize="isAuthenticated()"><a
+            class="px-5 py-2 bg-blue-400 text-white hover:bg-blue-500 transition-all rounded-lg" th:href="@{/logout}">Logout</a>
+    </div>
+</nav>
+
+<!-- alert-->
+<label th:if="${param.error}">
+    <input type="checkbox" class="alertCheckbox" autocomplete="off"/>
+    <div class="alert error">
+        <span class="alertClose">X</span>
+        <span class="alertText" th:text="${errorMessage}">
+		<br class="clear"/></span>
+    </div>
+</label>
+<label th:if="${param.success}">
+    <input type="checkbox" class="alertCheckbox" autocomplete="off"/>
+    <div class="alert success">
+        <span class="alertClose">X</span>
+        <span class="alertText" th:text="${successMessage}">
+		<br class="clear"/></span>
+    </div>
+</label>
+
+
+<div class="px-10 py-3">
+    <h1 class="text-3xl font-bold">
+        Welcome User <span th:text="${user.firstName}"></span> <span th:text="${user.lastName}"></span>
+    </h1>
+
+    <div sec:authorize="hasRole('ROLE_USER')">
+        <!--Book Cointainer-->
+        <div class="border border-gray-100 rounded-lg py-10 px-14 divide-y-2">
+            <div class="">
+                <h1 class="underline text-2xl my-3">Available books</h1>
+                <ul th:if="${books}" class="flex gap-1 justify-center">
+                    <li th:each="book: ${books}" th:if="${book.available}"
+                        class="flex flex-col items-center p-5 gap-2 w-1/5 hover:bg-gray-100 transition-all">
+                        <img th:src="${book.imageUrl}" alt="Book Cover" class="w-[150px] h-[225px]">
+                        <p class="flex justify-center items-center my-3 text-bold min-h-[48px]"
+                           th:text="${book.title}"></p>
+                        <form th:action="@{/rent/{bookId}(bookId=${book.id})}" method="post">
+                            <button class="px-7 py-3 bg-blue-300 hover:bg-blue-100 transition-all rounded-lg">Rent
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+            <div th:if="${currentlyRentedBook}">
+                <h1 class="underline text-2xl my-3">Currently rented books</h1>
+                <div class="flex gap-1 justify-center">
+                    <div class="flex flex-col items-center p-5 gap-2 w-1/5 hover:bg-gray-100 transition-all">
+                        <img th:src="${currentlyRentedBook.imageUrl}" alt="Book Cover" class="w-[150px] h-[225px]">
+                        <p class="flex justify-center items-center my-3 text-bold min-h-[48px]"
+                           th:text="${currentlyRentedBook.title}"></p>
+                        <form th:action="@{/return/{bookId}(bookId=${currentlyRentedBook.id})}" method="post">
+                            <button class="px-7 py-3 bg-red-300 hover:bg-red-100 transition-all rounded-lg">Return
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div sec:authorize="hasRole('ROLE_ADMIN')">
+        <!--Book Cointainer-->
+        <div class="border border-gray-100 rounded-lg py-10 px-14 divide-y-2">
+            <div class="">
+                <h1 class="underline text-2xl my-3">All rent</h1>
+                <ul th:if="${rents}" class="flex flex-col gap-1 border border-gray-300 rounded-lg">
+                    <li class="flex items-center p-5 gap-2 w-full h-20 bg-gray-100 transition-all">
+                        <p class="flex justify-center items-center my-3 text-bold  w-1/5"
+                           >Title</p>
+                        <p class="flex justify-center items-center my-3 text-bold w-1/5"
+                           >Rented Date</p>
+                        <p class="flex justify-center items-center my-3 text-bold w-1/5"
+                           >Expired Date</p>
+                        <p class="flex justify-center items-center my-3 text-bold  w-1/5"
+                           >is it expired ?</p>
+                        <p class="flex justify-center items-center my-3 text-bold  w-1/5"
+                        > Rented by
+                        </p>
+                    </li>
+                    <li th:each="rent: ${rents}"
+                        class="flex items-center p-5 gap-2 w-full h-20 hover:bg-gray-100 transition-all">
+                        <p class="flex justify-center items-center my-3 text-bold  w-1/5"
+                           th:text="${rent.book.title}"></p>
+                        <p class="flex justify-center items-center my-3 text-bold w-1/5"
+                           th:text="${rent.rentedAt}"></p>
+                        <p class="flex justify-center items-center my-3 text-bold w-1/5"
+                           th:text="${rent.expirationDate}"></p>
+                        <p class="flex justify-center items-center my-3 text-bold w-1/5 "
+                           th:text="${rent.isRentExpired()}"></p>
+                        <p class="flex justify-center items-center my-3 text-bold w-1/5 "
+                          ><span th:text="${rent.user.firstName}"></span>&nbsp;<span th:text="${rent.user.lastName}"></span>
+                        </p>
+                    </li>
+                </ul>
+            </div>
+            <div th:if="${currentlyRentedBook}">
+                <h1 class="underline text-2xl my-3">Currently rented books</h1>
+                <div class="flex gap-1 justify-center">
+                    <div class="flex flex-col items-center p-5 gap-2 w-1/5 hover:bg-gray-100 transition-all">
+                        <img th:src="${currentlyRentedBook.imageUrl}" alt="Book Cover" class="w-[150px] h-[225px]">
+                        <p class="flex justify-center items-center my-3 text-bold min-h-[48px]"
+                           th:text="${currentlyRentedBook.title}"></p>
+                        <form th:action="@{/return/{bookId}(bookId=${currentlyRentedBook.id})}" method="post">
+                            <button class="px-7 py-3 bg-red-300 hover:bg-red-100 transition-all rounded-lg">Return
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://unpkg.com/@material-tailwind/html@latest/scripts/dismissible.js"></script>
+</body>
+</html>
